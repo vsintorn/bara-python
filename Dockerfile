@@ -6,4 +6,4 @@ WORKDIR /
 
 
 # override the base image CMD
-CMD ["/usr/bin/python", "/python/app.py"]
+CMD ["/usr/bin/python", "/app/app.py"]
