@@ -14,4 +14,4 @@ rm -rf /var/lib/apt/lists/*
 easy_install pip &> /dev/null
 
 # install dependencies (in requirements.txt)
-pip install -r requirements.txt
+/var/app/bin/pip install -r requirements.txt
