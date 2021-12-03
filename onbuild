@@ -11,7 +11,9 @@ apt-get clean
 rm -rf /var/lib/apt/lists/*
 
 # install pip; ignore outputs
-easy_install pip &> /dev/null
-
+#easy_install pip &> /dev/null
+apt-get -y update
+pt-get update && apt-get install -y python3 python3-pip
+pip3 install -r requirements.txt
 # install dependencies (in requirements.txt)
-/var/app/bin/pip install -r requirements.txt
+#/var/app/bin/pip install -r requirements.txt
