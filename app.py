@@ -1,25 +1,74 @@
-# examples adapted from https://rpy2.readthedocs.io/en/version_2.8.x/introduction.html#getting-started
-
-import rpy2
+from flask import Flask, render_template, request, redirect
+from os import name
 import rpy2.robjects as robjects
+import removeSilence.soundprocess as sp
+import createPieChart as cpc
+import sys
+import os
 
-# eval pi
-print(robjects.r['pi'])
+#from werkzeug import secure_filename
 
-# get sum function, and call it
-rsum = robjects.r['sum']
-print(rsum(robjects.IntVector([1,2,3])))
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = r'\uploads'
 
-# define function "f"
-robjects.r('''
 
-  f <- function(r) {
-      cat("inside function\n")
-      2 * pi * r
-  }
+#@app.route("/")
+#def index():
+ #   return "Congratulations, it's a web app!"
 
-	''')
+def classify():
+  nameWav = 'recording.wav'
+  # Defining the R script and loading the instance in Python
+  r = robjects.r
+  r['source']('meeting2csv.R')
+  
+  #Remove silence from audio 
+  silenceRemovedPath = sp.soundProcessMain(f'{nameWav}')
 
-# get f and call
-f = robjects.globalenv['f']
-print(f(3.9876))
+  # Loading the functions we have defined in R.
+  meeting2csv_function_r = robjects.globalenv['meeting2csv']
+  #Invoking the R function and getting the result
+  # extract features from sound to a CSV file
+  namecsv = meeting2csv_function_r(silenceRemovedPath)
+  namecsv=''.join(namecsv)
+  
+  #predict gender and print out a pie chart of the result
+  data = cpc.mainPieChart(namecsv)
+  return render_template('classify.html', values = data)
+ 
+
+
+@app.route('/')
+def upload_file():
+   return render_template('upload.html')
+	
+@app.route('/classify', methods = ['GET', 'POST'])
+def upload_file2():
+   if request.method == 'POST':
+      f = request.files['file']
+      if f.filename.split('.')[-1] == 'wav':
+         f.save('recording.wav')
+      else: return redirect('/')
+      nameWav = 'recording.wav'
+      # Defining the R script and loading the instance in Python
+      r = robjects.r
+      r['source']('meeting2csv.R')
+      
+      #Remove silence from audio 
+      silenceRemovedPath = sp.soundProcessMain(f'{nameWav}')
+
+      # Loading the functions we have defined in R.
+      meeting2csv_function_r = robjects.globalenv['meeting2csv']
+      #Invoking the R function and getting the result
+      # extract features from sound to a CSV file
+      namecsv = meeting2csv_function_r(silenceRemovedPath)
+      namecsv=''.join(namecsv)
+      
+      #predict gender and print out a pie chart of the result
+      data = cpc.mainPieChart(namecsv)
+      return render_template('classify.html', values = data)
+
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=8080, debug=True)
+
